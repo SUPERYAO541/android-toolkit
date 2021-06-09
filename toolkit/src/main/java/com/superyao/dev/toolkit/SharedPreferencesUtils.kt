@@ -7,7 +7,6 @@ import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonParser
-import timber.log.Timber
 
 private val gson: Gson by lazy { Gson() }
 
@@ -34,7 +33,7 @@ fun <T> SharedPreferences.getValue(
             }
         }
     } catch (e: Exception) {
-        Timber.e(e)
+        e.printStackTrace()
         exceptionHandle?.invoke() ?: default
     }
 }
@@ -52,7 +51,7 @@ private fun <T> SharedPreferences.putValue(key: String, value: T): SharedPrefere
             else -> edit().putString(key, gson.toJson(value))
         }
     } catch (e: Exception) {
-        Timber.e(e)
+        e.printStackTrace()
         null
     }
 }
@@ -67,7 +66,7 @@ fun <T> SharedPreferences.getList(
         val jsonArray = JsonParser.parseString(json).asJsonArray
         jsonArray.map { gson.fromJson(it, classOfT) }
     } catch (e: Exception) {
-        Timber.e(e)
+        e.printStackTrace()
         exceptionHandle?.invoke() ?: listOf()
     }
 }
@@ -82,7 +81,7 @@ fun <T> SharedPreferences.putList(
         list.forEach { jsonArray.add(gson.toJsonTree(it)) }
         edit().putString(key, jsonArray.toString())
     } catch (e: Exception) {
-        Timber.e(e)
+        e.printStackTrace()
         null
     }
 }

@@ -12,7 +12,6 @@ import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.res.ResourcesCompat
-import timber.log.Timber
 
 class Ref<T>(var v: T)
 
@@ -40,7 +39,7 @@ fun PackageManager.isInstalledByGooglePlay(applicationId: String): Boolean {
         }
         false
     } catch (e: Exception) {
-        Timber.e(e)
+        e.printStackTrace()
         false
     }
 }

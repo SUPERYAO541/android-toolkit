@@ -77,8 +77,6 @@ dependencies {
     // =============================================================================================
 
     implementation("com.google.code.gson:gson:2.8.7")
-
-    implementation("com.jakewharton.timber:timber:4.7.1")
 }
 
 // Because the components are created only during the afterEvaluate phase, you must

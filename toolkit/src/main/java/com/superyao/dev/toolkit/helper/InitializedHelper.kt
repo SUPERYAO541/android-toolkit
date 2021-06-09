@@ -6,7 +6,7 @@ abstract class InitializedHelper {
 
     protected fun initCheck() {
         if (!initialized) {
-            throw IllegalStateException("$this has not been initialized.")
+            throw IllegalStateException("${this::class.java} has not been initialized.")
         }
     }
 }

@@ -4,6 +4,7 @@
 package com.superyao.dev.toolkit
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
@@ -14,13 +15,25 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker.PERMISSION_DENIED
+import java.lang.ref.WeakReference
 
 /**
  * The message shown when the user clicks "Don’t ask again".
  */
-private const val defaultDoNotAskAgainMessage =
+private const val defaultDontAskAgainDialogMessage =
     "The feature may not work without the requested permissions. " +
             "Do you want to go to the settings page to grant the permissions?"
+
+private const val GRANT_RESULT_GRANTED = 0
+private const val GRANT_RESULT_DENIED = -1
+private const val GRANT_RESULT_DENIED_DONT_ASK_AGAIN = -2
+//@IntDef(
+//    GRANT_RESULT_GRANTED,
+//    GRANT_RESULT_DENIED,
+//    GRANT_RESULT_DENIED_DONT_ASK_AGAIN
+//)
+//@Retention(AnnotationRetention.SOURCE)
+//annotation class GrantResult
 
 // ---------------------------------------------------------------------------------------------
 // Allow the system to manage the permission request code:
@@ -32,100 +45,140 @@ private const val defaultDoNotAskAgainMessage =
  *
  * class XxxActivity : AppCompatActivity() {
  *
- *     private val permissionLauncher = requestPermissionLauncher {
- *         // onGranted
- *     }
+ *     // step1: declare the PermissionsRequest
+ *     private val requestReadExternalStorageRequest = PermissionsRequest(
+ *         Manifest.permission.READ_EXTERNAL_STORAGE,
+ *         ...
+ *     )
  *
- *     private fun requestReadExternalStorage() {
- *         requestPermissions(
- *             permissionLauncher
- *             rationale,
- *             Manifest.permission.READ_EXTERNAL_STORAGE
- *         )
+ *     override fun onCreate(savedInstanceState: Bundle?) {
+ *         super.onCreate(savedInstanceState)
+ *         ...
+ *         // step2: init
+ *         requestReadExternalStorageRequest.apply {
+ *             onGranted = { ... }
+ *             onDenied = { doNotAskAgain -> ... }
+ *             dontAskAgainDialogMessage = "..."
+ *             onDontAskAgainHelpCancel = { ... }
+ *         }.init(this)
+ *
+ *         // step3: now you can request the permissions anywhere
+ *         requestReadExternalStorageRequest.request(rationale)
+ *         ...
  *     }
  * }
  */
-fun ComponentActivity.requestPermissionLauncher(
-    doNotAskAgainMessage: String = "",
-    onDenied: (() -> Unit)? = null,
-    onGranted: (() -> Unit)? = null,
-): ActivityResultLauncher<Array<String>> {
-    return registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        val permissions = it.keys.toTypedArray()
-        val grantResults = it.values.toBooleanArray()
-        if (checkGrantResults(permissions, grantResults, doNotAskAgainMessage)) {
-            onGranted?.invoke()
-        } else {
-            onDenied?.invoke()
+class PermissionsRequest(vararg permissions: String) {
+    private val permissions = arrayOf(*permissions)
+
+    private lateinit var weakActivity: WeakReference<ComponentActivity>
+    private lateinit var resultLauncher: ActivityResultLauncher<Array<String>>
+
+    var onGranted: (() -> Unit)? = null
+    var onDenied: ((doNotAskAgain: Boolean) -> Unit)? = null
+    var onDontAskAgainHelpCancel: (() -> Unit)? = null
+
+    var dontAskAgainDialogMessage = ""
+
+    fun init(activity: ComponentActivity) {
+        weakActivity = WeakReference(activity)
+        weakActivity.get()?.apply {
+            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+                val permissions = it.keys.toTypedArray()
+                val grantResults = it.values.toBooleanArray()
+                when (handleGrantResults(
+                    permissions,
+                    grantResults,
+                    dontAskAgainDialogMessage,
+                    onDontAskAgainHelpCancel
+                )) {
+                    GRANT_RESULT_GRANTED -> onGranted?.invoke()
+                    GRANT_RESULT_DENIED -> onDenied?.invoke(false)
+                    GRANT_RESULT_DENIED_DONT_ASK_AGAIN -> onDenied?.invoke(true)
+                }
+            }.also {
+                resultLauncher = it
+            }
         }
     }
-}
 
-/**
- * Request the permissions, and explain them.
- * Timing of explanation: shouldShowRequestPermissionRationale()
- * https://developer.android.com/training/permissions/requesting#explain
- *
- * @param rationale     the rationale for why would you request the permissions
- * @return return true if all permissions have been granted, otherwise false
- */
-fun Activity.requestPermissions(
-    requestPermissionLauncher: ActivityResultLauncher<Array<String>>,
-    rationale: String,
-    vararg permissions: String
-): Boolean {
-    val permissionArray = arrayOf(*permissions)
-    return requestPermissions(rationale, false, permissionArray) {
-        requestPermissionLauncher.launch(permissionArray)
-    }
-}
-
-/**
- * Request the permissions, and explain them.
- * Timing of explanation: Before requesting.
- *
- * @param rationale     the rationale for why would you request the permissions
- * @return return true if all permissions have been granted, otherwise false
- */
-fun Activity.requestPermissionsExplainFirst(
-    requestPermissionLauncher: ActivityResultLauncher<Array<String>>,
-    rationale: String,
-    vararg permissions: String
-): Boolean {
-    val permissionArray = arrayOf(*permissions)
-    return requestPermissions(rationale, true, permissionArray) {
-        requestPermissionLauncher.launch(permissionArray)
-    }
-}
-
-
-/**
- * Request the permissions without explaining.
- *
- * @return return true if all permissions have been granted, otherwise false
- */
-fun Activity.requestPermissionsNoExplain(
-    requestPermissionLauncher: ActivityResultLauncher<Array<String>>,
-    vararg permissions: String
-): Boolean {
-    val permissionArray = arrayOf(*permissions)
-    return requestPermissions("", false, permissionArray) {
-        requestPermissionLauncher.launch(permissionArray)
-    }
-}
-
-private fun Activity.checkGrantResults(
-    permissions: Array<String>,
-    grantResults: BooleanArray,
-    doNotAskAgainMessage: String,
-): Boolean {
-    grantResults.forEach {
-        if (!it) {
-            doNotAskAgainHandle(permissions, doNotAskAgainMessage)
-            return false
+    private fun Activity.handleGrantResults(
+        permissions: Array<String>,
+        grantResults: BooleanArray,
+        dontAskAgainDialogMessage: String,
+        onDontAskAgainHelpCancel: (() -> Unit)? = null,
+    ): Int {
+        grantResults.forEach {
+            if (!it) {
+                return doNotAskAgainHandle(
+                    permissions,
+                    dontAskAgainDialogMessage,
+                    onDontAskAgainHelpCancel
+                )
+            }
         }
+        return if (grantResults.isNotEmpty()) GRANT_RESULT_GRANTED else GRANT_RESULT_DENIED
     }
-    return grantResults.isNotEmpty()
+
+    fun checkPermissions(): Boolean {
+        weakActivity.get()?.run {
+            permissions.forEach {
+                if (ContextCompat.checkSelfPermission(this, it) == PERMISSION_DENIED) {
+                    return false
+                }
+            }
+            return true
+        }
+        return false
+    }
+
+    /**
+     * Request the permissions, and explain them.
+     * Timing of explanation: shouldShowRequestPermissionRationale()
+     * https://developer.android.com/training/permissions/requesting#explain
+     *
+     * @param rationale     the rationale for why would you request the permissions
+     * @return return true if all permissions have been granted, otherwise false
+     */
+    fun request(rationale: String): Boolean {
+        weakActivity.get()?.run {
+            return requestPermissions(rationale, false, permissions) {
+                resultLauncher.launch(permissions)
+            }
+        }
+        return false
+    }
+
+    /**
+     * Request the permissions, and explain them.
+     * Timing of explanation: Before requesting.
+     *
+     * @param rationale     the rationale for why would you request the permissions
+     * @return return true if all permissions have been granted, otherwise false
+     */
+    fun requestAndExplainFirst(rationale: String): Boolean {
+        weakActivity.get()?.run {
+            return requestPermissions(rationale, true, permissions) {
+                resultLauncher.launch(permissions)
+            }
+        }
+        return false
+    }
+
+
+    /**
+     * Request the permissions without explaining.
+     *
+     * @return return true if all permissions have been granted, otherwise false
+     */
+    fun requestAndNoExplain(): Boolean {
+        weakActivity.get()?.run {
+            return requestPermissions("", false, permissions) {
+                resultLauncher.launch(permissions)
+            }
+        }
+        return false
+    }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -136,7 +189,8 @@ private fun Activity.checkGrantResults(
 fun Activity.requestPermissions(
     rationale: String,
     requestCode: Int,
-    vararg permissions: String
+    vararg permissions: String,
+    onDontAskAgainHelpCancel: (() -> Unit)? = null,
 ): Boolean {
     return requestPermissions(rationale, false, arrayOf(*permissions)) {
         ActivityCompat.requestPermissions(
@@ -150,7 +204,8 @@ fun Activity.requestPermissions(
 fun Activity.requestPermissionsExplainFirst(
     rationale: String,
     requestCode: Int,
-    vararg permissions: String
+    vararg permissions: String,
+    onDontAskAgainHelpCancel: (() -> Unit)? = null,
 ): Boolean {
     return requestPermissions(rationale, true, arrayOf(*permissions)) {
         ActivityCompat.requestPermissions(
@@ -163,7 +218,8 @@ fun Activity.requestPermissionsExplainFirst(
 
 fun Activity.requestPermissionsNoExplain(
     requestCode: Int,
-    vararg permissions: String
+    vararg permissions: String,
+    onDontAskAgainHelpCancel: (() -> Unit)? = null,
 ): Boolean {
     return requestPermissions("", false, arrayOf(*permissions)) {
         ActivityCompat.requestPermissions(
@@ -185,7 +241,7 @@ fun Activity.requestPermissionsNoExplain(
  *     super.onRequestPermissionsResult(requestCode, permissions, grantResults)
  *     when (requestCode) {
  *         REQUEST_EXTERNAL_STORAGE_PERMISSION -> {
- *             if (checkGrantResults(permissions, grantResults)) {
+ *             if (handleGrantResults(permissions, grantResults)) {
  *                 // do something after all permissions have been granted
  *             }
  *         }
@@ -196,14 +252,15 @@ fun Activity.requestPermissionsNoExplain(
  * @param grantResults 授予結果
  * @return 權限是否全部都有獲得
  */
-fun Activity.checkGrantResults(
+fun Activity.handleGrantResults(
     permissions: Array<String>,
     grantResults: IntArray,
-    doNotAskAgainMessage: String = "",
+    dontAskAgainDialogMessage: String = "",
+    onDontAskAgainHelpCancel: (() -> Unit)? = null,
 ): Boolean {
     grantResults.forEach {
         if (it == PERMISSION_DENIED) {
-            doNotAskAgainHandle(permissions, doNotAskAgainMessage)
+            doNotAskAgainHandle(permissions, dontAskAgainDialogMessage, onDontAskAgainHelpCancel)
             return false
         }
     }
@@ -214,7 +271,7 @@ fun Activity.checkGrantResults(
 // common
 // ---------------------------------------------------------------------------------------------
 
-fun Activity.checkPermissions(vararg permissions: String): Boolean {
+fun Context.checkPermissions(vararg permissions: String): Boolean {
     permissions.forEach {
         if (ContextCompat.checkSelfPermission(this, it) == PERMISSION_DENIED) {
             return false
@@ -228,14 +285,14 @@ fun Activity.checkPermissions(vararg permissions: String): Boolean {
  *
  * @param rationale         the rationale for why would you request the permissions
  * @param explainFirst      if true, explain the rationale before request the permissions
- * @param requestFunction   the function of permission request
+ * @param onRequest   the function of permission request
  * @return return true if all permissions have been granted, otherwise false
  */
 private fun Activity.requestPermissions(
     rationale: String,
     explainFirst: Boolean,
     permissions: Array<String>,
-    requestFunction: () -> Unit
+    onRequest: () -> Unit,
 ): Boolean {
     var anyPermissionHasDenied = false
     var shouldShowRequestPermissionRationale = false
@@ -252,9 +309,9 @@ private fun Activity.requestPermissions(
     if (anyPermissionHasDenied) {
         // 是否告知理由後才請求
         if ((explainFirst || shouldShowRequestPermissionRationale) && rationale.isNotEmpty()) {
-            dialog(rationale, requestFunction)
+            dialog(rationale, onPositive = onRequest)
         } else {
-            requestFunction()
+            onRequest()
         }
         return false // 缺少權限
     }
@@ -267,8 +324,9 @@ private fun Activity.requestPermissions(
  */
 private fun Activity.doNotAskAgainHandle(
     permissions: Array<String>,
-    doNotAskAgainMessage: String,
-) {
+    dontAskAgainDialogMessage: String,
+    onDontAskAgainHelpCancel: (() -> Unit)? = null,
+): Int {
     // 檢查是否有權限同時滿足以下 2 點:
     // 1.checkSelfPermission == PERMISSION_DENIED
     // 2.shouldShowRequestPermissionRationale() == false
@@ -276,43 +334,46 @@ private fun Activity.doNotAskAgainHandle(
         if (ActivityCompat.checkSelfPermission(this, it) == PERMISSION_DENIED) {
             if (!ActivityCompat.shouldShowRequestPermissionRationale(this, it)) {
                 dialog(
-                    if (doNotAskAgainMessage.isNotEmpty()) {
-                        doNotAskAgainMessage
+                    if (dontAskAgainDialogMessage.isNotEmpty()) {
+                        dontAskAgainDialogMessage
                     } else {
-                        defaultDoNotAskAgainMessage
+                        defaultDontAskAgainDialogMessage
+                    },
+                    onNegative = onDontAskAgainHelpCancel,
+                    onPositive = {
+                        // 跳轉到該 app 的「應用程式資訊」
+                        Intent().apply {
+                            action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                            data = Uri.fromParts("package", packageName, null)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }.run {
+                            startActivity(this)
+                        }
                     }
-                ) {
-                    // 跳轉到該 app 的「應用程式資訊」
-                    Intent().apply {
-                        action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                        data = Uri.Builder().scheme("package").authority(packageName).build()
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }.run {
-                        startActivity(this)
-                    }
-                }
-                return
+                )
+                return GRANT_RESULT_DENIED_DONT_ASK_AGAIN
             }
         }
     }
+    return GRANT_RESULT_DENIED
 }
 
 // ---------------------------------------------------------------------------------------------
 // others
 // ---------------------------------------------------------------------------------------------
 
-/**
- * 顯示 Dialog
- *
- * @param message       顯示的內容
- * @param onPositive    按下 positive button 後執行的方法
- */
-private fun Activity.dialog(message: String, onPositive: () -> Unit) {
-    AlertDialog.Builder(this)
-        .setTitle(android.R.string.dialog_alert_title)
-        .setMessage(message)
-        .setPositiveButton(android.R.string.ok) { _, _ -> onPositive() }
-        .setNegativeButton(android.R.string.cancel, null)
-        .setCancelable(false)
-        .show()
+private fun Activity.dialog(
+    message: String,
+    onNegative: (() -> Unit)? = null,
+    onPositive: () -> Unit,
+) {
+    AlertDialog.Builder(this).apply {
+        setTitle(android.R.string.dialog_alert_title)
+        setMessage(message)
+        setPositiveButton(android.R.string.ok) { _, _ -> onPositive() }
+        if (onNegative != null) {
+            setNegativeButton(android.R.string.cancel) { _, _ -> onNegative() }
+        }
+        setCancelable(false)
+    }.show()
 }
