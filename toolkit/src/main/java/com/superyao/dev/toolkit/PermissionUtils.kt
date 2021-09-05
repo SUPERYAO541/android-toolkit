@@ -40,6 +40,7 @@ private enum class GrantResult {
  *
  *     // step1: declare the PermissionsRequest
  *     private val readExternalStorageRequest = PermissionsRequest(
+ *         this,
  *         Manifest.permission.READ_EXTERNAL_STORAGE,
  *         ...
  *     )
