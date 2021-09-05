@@ -27,9 +27,7 @@ private fun Long.unixTimeToLongArray(): LongArray {
 }
 
 fun Long.unixTimeHHmmssFormat(): String {
-    return unixTimeToLongArray().let {
-        "%02d:%02d:%02d".format(it[1], it[2], it[3])
-    }
+    return unixTimeToLongArray().let { "%02d:%02d:%02d".format(it[1], it[2], it[3]) }
 }
 
 val commonSdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)

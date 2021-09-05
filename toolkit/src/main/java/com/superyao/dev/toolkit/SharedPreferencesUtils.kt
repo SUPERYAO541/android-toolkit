@@ -8,13 +8,13 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonParser
 
-private val gson: Gson by lazy { Gson() }
+private val gson by lazy { Gson() }
 
 @Suppress("UNCHECKED_CAST")
 fun <T> SharedPreferences.getValue(
     key: String,
     default: T,
-    exceptionHandle: (() -> T)? = null
+    onException: (() -> T)? = null
 ): T {
     return try {
         when (default) {
@@ -34,7 +34,7 @@ fun <T> SharedPreferences.getValue(
         }
     } catch (e: Exception) {
         e.printStackTrace()
-        exceptionHandle?.invoke() ?: default
+        onException?.invoke() ?: default
     }
 }
 
