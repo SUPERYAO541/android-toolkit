@@ -74,7 +74,7 @@ dependencies {
     // third-party
     // =============================================================================================
 
-    implementation("com.google.code.gson:gson:2.8.7")
+    implementation("com.google.code.gson:gson:2.8.8")
 }
 
 // Because the components are created only during the afterEvaluate phase, you must
