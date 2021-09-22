@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.superyao.dev.android.example"
-        minSdk = 24
+        minSdk = 21
         targetSdk = 31
         versionCode = 1
         versionName = "1.0.0"

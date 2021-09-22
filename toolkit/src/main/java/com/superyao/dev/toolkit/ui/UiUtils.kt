@@ -31,10 +31,9 @@ fun clickTooFast(interval: Int = 500): Boolean {
 EditText
  */
 
-fun EditText.afterTextChangedListener(
-    runOnceOnFirst: Boolean = false,
+fun EditText.addTextChangedListenerAndRun(
     afterTextChanged: (text: Editable?) -> Unit = {}
 ) {
-    if (runOnceOnFirst) afterTextChanged(editableText)
+    afterTextChanged(editableText)
     addTextChangedListener(afterTextChanged = afterTextChanged)
 }

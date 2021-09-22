@@ -53,8 +53,8 @@ const val JPG_QUALITY_MID = 85
 const val JPG_QUALITY_LOW = 75
 const val JPG_QUALITY_MIN = 25
 
-fun isOrientationNormal(exifInterface: ExifInterface?): Boolean {
-    return exifInterface?.getAttributeInt(
+fun isOrientationNormal(exifInterface: ExifInterface): Boolean {
+    return exifInterface.getAttributeInt(
         ExifInterface.TAG_ORIENTATION,
         ExifInterface.ORIENTATION_UNDEFINED
     ).let {
@@ -62,8 +62,8 @@ fun isOrientationNormal(exifInterface: ExifInterface?): Boolean {
     }
 }
 
-fun resetOrientation(exifInterface: ExifInterface?) {
-    exifInterface?.run {
+fun resetOrientation(exifInterface: ExifInterface) {
+    exifInterface.run {
         resetOrientation()
         saveAttributes()
     }

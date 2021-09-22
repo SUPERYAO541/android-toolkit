@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Resources
+import android.net.Uri
 import android.os.Build
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
@@ -25,6 +26,8 @@ fun Context.drawable(@DrawableRes id: Int) =
     AppCompatResources.getDrawable(this, id)
 
 fun String.handleNewLine() = replace("\\n", "\n")
+
+fun Context.resourceUri(id: Int): Uri = Uri.parse("android.resource://${packageName}/$id")
 
 fun PackageManager.isInstalledByGooglePlay(applicationId: String): Boolean {
     return try {

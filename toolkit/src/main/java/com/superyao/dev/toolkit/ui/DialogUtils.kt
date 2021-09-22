@@ -3,7 +3,7 @@
 
 package com.superyao.dev.toolkit.ui
 
-import android.app.Activity
+import android.content.Context
 import android.text.util.Linkify
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -55,7 +55,7 @@ fun AlertDialog.linkify(): AlertDialog {
     return this
 }
 
-fun <T : CharSequence> Activity.messageDialog(
+fun <T : CharSequence> Context.messageDialog(
     title: String,
     message: T,
     cancelable: Boolean = true
@@ -68,7 +68,7 @@ fun <T : CharSequence> Activity.messageDialog(
     .textSelectable()
     .linkify()
 
-fun Activity.singleChoiceDialogBuilder(
+fun Context.singleChoiceDialogBuilder(
     title: String,
     items: Array<String>,
     defaultIdx: Int = 0,
@@ -79,6 +79,7 @@ fun Activity.singleChoiceDialogBuilder(
     return AlertDialog.Builder(this)
         .setTitle(title)
         .setSingleChoiceItems(items, defaultIdx) { _, which -> selected[0] = which }
+        .setCancelable(false)
         .setPositiveButton(positiveName) { _, _ ->
             onPositive(selected[0])
         }
