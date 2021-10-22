@@ -8,16 +8,12 @@ import android.text.util.Linkify
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 
-fun AlertDialog.Builder.okButton(
-    onClick: (() -> Unit)? = null
-): AlertDialog.Builder = setPositiveButton(android.R.string.ok) { _, _ ->
-    onClick?.invoke()
+fun AlertDialog.Builder.okButton(onClick: (() -> Unit)? = null): AlertDialog.Builder {
+    return setPositiveButton(android.R.string.ok) { _, _ -> onClick?.invoke() }
 }
 
-fun AlertDialog.Builder.cancelButton(
-    onClick: (() -> Unit)? = null
-): AlertDialog.Builder = setNegativeButton(android.R.string.cancel) { _, _ ->
-    onClick?.invoke()
+fun AlertDialog.Builder.cancelButton(onClick: (() -> Unit)? = null): AlertDialog.Builder {
+    return setNegativeButton(android.R.string.cancel) { _, _ -> onClick?.invoke() }
 }
 
 fun AlertDialog.lockPositive(lock: Boolean) {
@@ -41,7 +37,9 @@ fun AlertDialog.lockNeutral(lock: Boolean) {
     }
 }
 
-fun AlertDialog.messageTextView() = findViewById<TextView>(android.R.id.message)
+fun AlertDialog.messageTextView(): TextView? {
+    return findViewById(android.R.id.message)
+}
 
 fun AlertDialog.textSelectable(selectable: Boolean = true): AlertDialog {
     findViewById<TextView>(android.R.id.message)?.setTextIsSelectable(selectable)
