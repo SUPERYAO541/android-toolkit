@@ -72,15 +72,15 @@ fun Context.singleChoiceDialogBuilder(
     title: String,
     items: Array<String>,
     defaultIdx: Int = 0,
-    positiveName: String = getString(android.R.string.cancel),
+    positiveName: String = getString(android.R.string.ok),
     onPositive: (which: Int) -> Unit
 ): AlertDialog.Builder {
     val selected = arrayOf(defaultIdx)
     return AlertDialog.Builder(this)
         .setTitle(title)
         .setSingleChoiceItems(items, defaultIdx) { _, which -> selected[0] = which }
-        .setCancelable(false)
         .setPositiveButton(positiveName) { _, _ ->
             onPositive(selected[0])
         }
+        .cancelButton {}
 }
