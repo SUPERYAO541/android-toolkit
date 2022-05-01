@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
 import android.net.Uri
-import androidx.core.net.toUri
 import kotlin.system.exitProcess
 
 fun Intent.clear() {
@@ -34,17 +33,21 @@ fun shareExtraStreamIntent(uri: Uri, mimeType: String, title: String): Intent {
     return Intent.createChooser(intent, title)
 }
 
-fun urlIntent(url: String) = Intent(Intent.ACTION_VIEW, url.toUri())
+fun getActionViewIntent(url: String): Intent {
+    return Intent(Intent.ACTION_VIEW, Uri.parse(url))
+}
 
-fun openURL(context: Context, url: String) = runCatching { context.startActivity(urlIntent(url)) }
+fun openURL(context: Context, url: String): Result<Unit> {
+    return runCatching { context.startActivity(getActionViewIntent(url)) }
+}
 
-fun restartIntent(context: Context): Intent {
+fun getRestartIntent(context: Context): Intent {
     val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
     val componentName = launchIntent?.component
     return Intent.makeRestartActivityTask(componentName)
 }
 
 fun restartApp(context: Context) {
-    context.startActivity(restartIntent(context))
+    context.startActivity(getRestartIntent(context))
     exitProcess(0)
 }

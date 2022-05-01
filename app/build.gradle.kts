@@ -1,5 +1,6 @@
 plugins {
     id("com.android.application")
+
     // kotlin
     id("kotlin-android")
     id("kotlin-parcelize")
@@ -45,16 +46,16 @@ android {
     }
 
     lint {
-        disable("ContentDescription")
+        disable.add("ContentDescription")
     }
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.30")
-    implementation("androidx.core:core-ktx:1.6.0")
-    implementation("com.google.android.material:material:1.4.0")
-    implementation("androidx.appcompat:appcompat:1.3.1")
     implementation(project(mapOf("path" to ":toolkit")))
+
+    implementation("androidx.core:core-ktx:1.7.0")
+    implementation("com.google.android.material:material:1.5.0")
+    implementation("androidx.appcompat:appcompat:1.4.1")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test:runner:1.4.0")

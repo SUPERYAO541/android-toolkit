@@ -12,9 +12,9 @@ private val gson by lazy { Gson() }
 
 @Suppress("UNCHECKED_CAST")
 fun <T> SharedPreferences.getValue(
-    key: String,
-    default: T,
-    onException: (() -> T)? = null
+        key: String,
+        default: T,
+        onException: (() -> T)? = null
 ): T {
     return try {
         when (default) {
@@ -57,9 +57,9 @@ private fun <T> SharedPreferences.putValue(key: String, value: T): SharedPrefere
 }
 
 fun <T> SharedPreferences.getList(
-    key: String,
-    classOfT: Class<T>,
-    exceptionHandle: (() -> List<T>)? = null
+        key: String,
+        classOfT: Class<T>,
+        exceptionHandle: (() -> List<T>)? = null
 ): List<T> {
     return try {
         val json = this.getString(key)
@@ -73,8 +73,8 @@ fun <T> SharedPreferences.getList(
 
 @Suppress("CommitPrefEdits")
 fun <T> SharedPreferences.putList(
-    key: String,
-    list: List<T>
+        key: String,
+        list: List<T>
 ): SharedPreferences.Editor? {
     return try {
         val jsonArray = JsonArray()
@@ -98,13 +98,13 @@ fun SharedPreferences.getFloat(key: String) = getValue(key, 0f)
 fun SharedPreferences.getBoolean(key: String) = getValue(key, false)
 
 fun <T> SharedPreferences.commitValue(key: String, value: T) =
-    putValue(key, value)?.commit() == true
+        putValue(key, value)?.commit() == true
 
 fun <T> SharedPreferences.applyValue(key: String, value: T) =
-    putValue(key, value)?.apply()
+        putValue(key, value)?.apply()
 
 fun <T> SharedPreferences.commitList(key: String, value: List<T>) =
-    putList(key, value)?.commit() == true
+        putList(key, value)?.commit() == true
 
 fun <T> SharedPreferences.applyList(key: String, value: List<T>) =
-    putList(key, value)?.apply()
+        putList(key, value)?.apply()

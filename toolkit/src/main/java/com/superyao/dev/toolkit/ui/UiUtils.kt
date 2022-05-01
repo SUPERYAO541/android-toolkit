@@ -32,7 +32,7 @@ EditText
  */
 
 fun EditText.addTextChangedListenerAndRun(
-    afterTextChanged: (text: Editable?) -> Unit = {}
+        afterTextChanged: (text: Editable?) -> Unit = {}
 ) {
     afterTextChanged(editableText)
     addTextChangedListener(afterTextChanged = afterTextChanged)

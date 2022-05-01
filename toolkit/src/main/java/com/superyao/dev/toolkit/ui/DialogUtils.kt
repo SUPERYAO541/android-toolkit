@@ -54,31 +54,31 @@ fun AlertDialog.linkify(): AlertDialog {
 }
 
 fun <T : CharSequence> Context.messageDialog(
-    title: String,
-    message: T,
-    cancelable: Boolean = true
+        title: String,
+        message: T,
+        cancelable: Boolean = true
 ) = AlertDialog.Builder(this)
-    .setTitle(title)
-    .setMessage(message)
-    .setCancelable(cancelable)
-    .okButton()
-    .show()
-    .textSelectable()
-    .linkify()
+        .setTitle(title)
+        .setMessage(message)
+        .setCancelable(cancelable)
+        .okButton()
+        .show()
+        .textSelectable()
+        .linkify()
 
 fun Context.singleChoiceDialogBuilder(
-    title: String,
-    items: Array<String>,
-    defaultIdx: Int = 0,
-    positiveName: String = getString(android.R.string.ok),
-    onPositive: (which: Int) -> Unit
+        title: String,
+        items: Array<String>,
+        defaultIdx: Int = 0,
+        positiveName: String = getString(android.R.string.ok),
+        onPositive: (which: Int) -> Unit
 ): AlertDialog.Builder {
     val selected = arrayOf(defaultIdx)
     return AlertDialog.Builder(this)
-        .setTitle(title)
-        .setSingleChoiceItems(items, defaultIdx) { _, which -> selected[0] = which }
-        .setPositiveButton(positiveName) { _, _ ->
-            onPositive(selected[0])
-        }
-        .cancelButton {}
+            .setTitle(title)
+            .setSingleChoiceItems(items, defaultIdx) { _, which -> selected[0] = which }
+            .setPositiveButton(positiveName) { _, _ ->
+                onPositive(selected[0])
+            }
+            .cancelButton {}
 }

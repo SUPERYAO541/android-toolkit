@@ -9,10 +9,12 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 
-fun Context.vibrator() = if (Build.VERSION.SDK_INT >= 31) {
-    (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
-} else {
-    getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+fun Context.vibrator(): Vibrator {
+    return if (Build.VERSION.SDK_INT >= 31) {
+        (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+    } else {
+        getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    }
 }
 
 fun Context.effectHeavyClickVibrate() {

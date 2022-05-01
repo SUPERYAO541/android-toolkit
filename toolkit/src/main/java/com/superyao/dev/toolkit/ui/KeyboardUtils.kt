@@ -12,14 +12,14 @@ https://developer.android.com/training/keyboard-input/visibility#ShowOnDemand
  */
 
 fun Context.inputMethodManager() =
-    getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+        getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
 
 fun View.isSoftInputShown() = context.inputMethodManager()?.isActive(this) == true
 
 fun View.showSoftInput(): Boolean {
     return context.inputMethodManager()?.showSoftInput(
-        this,
-        InputMethodManager.SHOW_IMPLICIT
+            this,
+            InputMethodManager.SHOW_IMPLICIT
     ) ?: false
 }
 

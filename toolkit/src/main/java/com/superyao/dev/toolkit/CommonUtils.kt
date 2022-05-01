@@ -6,28 +6,26 @@ package com.superyao.dev.toolkit
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
-import android.content.res.Resources
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.content.res.ResourcesCompat
 
 class Ref<T>(var v: T)
 
-fun Context.color(@ColorRes color: Int, theme: Resources.Theme? = null) =
-    ResourcesCompat.getColor(resources, color, theme)
+fun Context.getCompatColorStateList(@ColorRes id: Int): ColorStateList {
+    return AppCompatResources.getColorStateList(this, id)
+}
 
-fun Context.colorStateList(@ColorRes id: Int): ColorStateList =
-    AppCompatResources.getColorStateList(this, id)
+fun Context.getCompatDrawable(@DrawableRes id: Int): Drawable? {
+    return AppCompatResources.getDrawable(this, id)
+}
 
-fun Context.drawable(@DrawableRes id: Int) =
-    AppCompatResources.getDrawable(this, id)
-
-fun String.handleNewLine() = replace("\\n", "\n")
-
-fun Context.resourceUri(id: Int): Uri = Uri.parse("android.resource://${packageName}/$id")
+fun Context.getResourceUri(id: Int): Uri {
+    return Uri.parse("android.resource://${packageName}/$id")
+}
 
 fun PackageManager.isInstalledByGooglePlay(applicationId: String): Boolean {
     return try {
